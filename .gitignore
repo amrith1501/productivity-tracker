@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Backend runtime state — do NOT commit user data or secrets
+backend/app.db
+backend/app.db-journal
+backend/app.db-wal
+backend/app.db-shm
+backend/state.json
+backend/.secret
+backend/tasks_inbox/*
+!backend/tasks_inbox/2026-05-25.json
+
+# Node / Vite
+node_modules/
+dist/
+.vite/
+*.log
+
+# Editor
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,12 @@
+{
+  "tasks": [
+    {"title": "Review Q2 design doc", "description": "Read and leave comments on the shared doc."},
+    {"title": "Fix login bug #482", "description": "Session token not refreshing after 1h."},
+    {"title": "Write release notes", "description": "Cover features shipped this sprint."},
+    {"title": "Update dependency lockfile", "description": "Run audit and bump minor versions."},
+    {"title": "Onboarding call with new hire", "description": "30-min intro session."},
+    {"title": "Triage incoming bug reports", "description": "Categorize by severity."},
+    {"title": "Deploy staging build", "description": "After CI green."},
+    {"title": "Backfill metrics dashboard", "description": "Missing data for last week."}
+  ]
+}
