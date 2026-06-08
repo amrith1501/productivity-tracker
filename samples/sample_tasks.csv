@@ -1,0 +1,11 @@
+Task ID,Task Name,Description,Assigned Employee_ID
+T-001,Review Q2 design doc,Read and leave comments on the shared doc.,Alice
+T-002,Fix login bug #482,Session token not refreshing after 1h.,Bob
+T-003,Write release notes,Cover features shipped this sprint.,Carol
+T-004,Update dependency lockfile,Run audit and bump minor versions.,Dave
+T-005,Onboarding call with new hire,30-min intro session.,
+T-006,Triage incoming bug reports,Categorize by severity.,
+T-007,Deploy staging build,After CI green.,
+T-008,Backfill metrics dashboard,Missing data for last week.,
+T-009,Write API integration tests,Cover the new /tasks endpoints.,Alice
+T-010,Refactor auth middleware,Reduce duplication between routes.,

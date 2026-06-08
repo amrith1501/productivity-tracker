@@ -1,28 +1,27 @@
 # Python
 __pycache__/
 *.py[cod]
-*.egg-info/
 .venv/
 venv/
-.env
+env/
 
-# Backend runtime state — do NOT commit user data or secrets
+# Local database & migration artifacts
+*.db
 backend/app.db
-backend/app.db-journal
-backend/app.db-wal
-backend/app.db-shm
-backend/state.json
-backend/.secret
-backend/tasks_inbox/*
-!backend/tasks_inbox/2026-05-25.json
+state.json
+*.migrated
 
-# Node / Vite
+# Node / frontend
 node_modules/
 dist/
 .vite/
-*.log
 
-# Editor
+# Environment & secrets
+.env
+.env.*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
 .vscode/
 .idea/
-.DS_Store

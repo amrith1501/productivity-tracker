@@ -76,7 +76,12 @@ function Column({ title, tasks, action, color }) {
           <div key={t.id}
             className={`bg-white rounded-lg shadow-sm border-l-4 ${borderMap[color]} p-4 flex justify-between gap-4`}>
             <div>
-              <div className="font-medium">{t.title}</div>
+              <div className="flex items-center gap-2">
+                {t.external_id && (
+                  <span className="text-xs font-mono text-slate-400">{t.external_id}</span>
+                )}
+                <div className="font-medium">{t.title}</div>
+              </div>
               {t.description && <div className="text-sm text-slate-500 mt-0.5">{t.description}</div>}
               <div className="mt-2"><StatusBadge status={t.status} /></div>
             </div>

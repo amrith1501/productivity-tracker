@@ -3,6 +3,7 @@ import { api } from './api';
 import Login from './Login.jsx';
 import SupervisorView from './SupervisorView.jsx';
 import WorkerView from './WorkerView.jsx';
+import NotificationBell from './NotificationBell.jsx';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -45,8 +46,9 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="bg-[#0a1f44] text-white shadow-md">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between flex-wrap gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">Productivity Tracker</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Horizon Productivity Tracker</h1>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <div className="text-right">
               <div className="text-sm font-medium">{user.employee || user.username}</div>
               <div className="text-xs text-slate-300 capitalize">{user.role}</div>

@@ -1,15 +1,25 @@
 # Productivity Tracker
 
 A continuous task-intake productivity tracker. Drop daily task files in
-`backend/tasks_inbox/`; the backend assigns them round-robin across employees.
-Two role-based views: **Supervisor** (edit + approve) and **Worker** (start +
-submit).
+`backend/tasks_inbox/`; the backend assigns them round-robin across active
+workers and routes each task to that worker's supervisor. Two role-based
+views: **Supervisor** (edit + approve, productivity dashboard) and
+**Worker** (start + submit).
 
 ## Architecture
 
-- **Backend** — FastAPI. Watches `tasks_inbox/` every 5 s, distributes tasks
-  evenly, persists to `state.json`.
-- **Frontend** — React + Vite + Tailwind. Polls the API every 4 s.
+- **Backend** — FastAPI + SQLite (`app.db`). Watches `tasks_inbox/` every
+  5 s and persists all tasks, users, password resets, and ingestion
+  bookkeeping into SQLite. Each task is owned by a single supervisor
+  (`tasks.supervisor_id`), giving every supervisor an isolated view.
+- **Frontend** — React + Vite + Tailwind. Polls the API every 4 s. The
+  task table is scoped to the **last 10 days** by default
+  (`GET /api/tasks`); the productivity charts use the full history via
+  `GET /api/tasks?all=true`.
+
+The first time the new backend starts, any legacy `backend/state.json`
+is migrated into SQLite (tasks are attributed to the supervisor that
+manages each task's assignee) and renamed to `state.json.migrated`.
 
 ## Running
 

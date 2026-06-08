@@ -7,7 +7,7 @@ export default function Login({ onLogin }) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a1f44] via-[#13294b] to-slate-900 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         <div className="bg-[#0a1f44] text-white px-8 py-6 text-center">
-          <h1 className="text-2xl font-bold">Productivity Tracker</h1>
+          <h1 className="text-2xl font-bold">Horizon Productivity Tracker</h1>
           <p className="text-sm text-slate-300 mt-1">
             {tab === 'signin' && 'Sign in to your account'}
             {tab === 'register' && 'Create a new account'}

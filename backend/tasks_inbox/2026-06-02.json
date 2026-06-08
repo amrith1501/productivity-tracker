@@ -1,0 +1,12 @@
+{
+  "tasks": [
+    {"task_id": "T-009", "title": "Write API integration tests", "description": "Cover the new /tasks endpoints."},
+    {"task_id": "T-010", "title": "Refactor auth middleware", "description": "Reduce duplication between routes."},
+    {"task_id": "T-011", "title": "Audit third-party licenses", "description": "Confirm all deps are compatible."},
+    {"task_id": "T-012", "title": "Set up nightly DB backup", "description": "Cron job + offsite copy."},
+    {"task_id": "T-013", "title": "Improve error logging", "description": "Add structured logs with request IDs."},
+    {"task_id": "T-014", "title": "Update onboarding docs", "description": "Reflect the new SQLite setup."},
+    {"task_id": "T-015", "title": "Profile slow dashboard query", "description": "Investigate stats endpoint latency."},
+    {"task_id": "T-016", "title": "Add rate limit to reset endpoint", "description": "Prevent token-request abuse."}
+  ]
+}

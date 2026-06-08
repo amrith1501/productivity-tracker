@@ -1,12 +1,12 @@
 {
   "tasks": [
-    {"title": "Review Q2 design doc", "description": "Read and leave comments on the shared doc."},
-    {"title": "Fix login bug #482", "description": "Session token not refreshing after 1h."},
-    {"title": "Write release notes", "description": "Cover features shipped this sprint."},
-    {"title": "Update dependency lockfile", "description": "Run audit and bump minor versions."},
-    {"title": "Onboarding call with new hire", "description": "30-min intro session."},
-    {"title": "Triage incoming bug reports", "description": "Categorize by severity."},
-    {"title": "Deploy staging build", "description": "After CI green."},
-    {"title": "Backfill metrics dashboard", "description": "Missing data for last week."}
+    {"task_id": "T-001", "title": "Review Q2 design doc", "description": "Read and leave comments on the shared doc."},
+    {"task_id": "T-002", "title": "Fix login bug #482", "description": "Session token not refreshing after 1h."},
+    {"task_id": "T-003", "title": "Write release notes", "description": "Cover features shipped this sprint."},
+    {"task_id": "T-004", "title": "Update dependency lockfile", "description": "Run audit and bump minor versions."},
+    {"task_id": "T-005", "title": "Onboarding call with new hire", "description": "30-min intro session."},
+    {"task_id": "T-006", "title": "Triage incoming bug reports", "description": "Categorize by severity."},
+    {"task_id": "T-007", "title": "Deploy staging build", "description": "After CI green."},
+    {"task_id": "T-008", "title": "Backfill metrics dashboard", "description": "Missing data for last week."}
   ]
 }
