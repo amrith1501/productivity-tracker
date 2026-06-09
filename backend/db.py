@@ -321,6 +321,36 @@ def existing_external_ids(supervisor_id: int) -> set[str]:
         return {r["external_id"] for r in rows}
 
 
+def existing_task_keys(supervisor_id: int) -> tuple[set[str], set[str]]:
+    """Snapshot of what's currently stored for a supervisor, used to dedupe
+    ingestion against the *live* task list (not against a record of files
+    seen in the past). Returns ``(external_ids, content_keys)`` where:
+
+    - ``external_ids`` are the Task IDs present in the DB right now.
+    - ``content_keys`` identify tasks that carry no Task ID, by
+      ``source_file``/``title``/``description``.
+
+    Because this reflects the current rows, a task that the supervisor
+    deletes drops out of the snapshot and will be re-created the next time
+    its source file is scanned.
+    """
+    ext_ids: set[str] = set()
+    content: set[str] = set()
+    with connect() as conn:
+        rows = conn.execute(
+            """SELECT external_id, source_file, title, description
+               FROM tasks WHERE supervisor_id = ?""",
+            (supervisor_id,),
+        ).fetchall()
+    for r in rows:
+        if r["external_id"]:
+            ext_ids.add(r["external_id"])
+        else:
+            content.add(
+                f"{r['source_file']}\x1f{r['title']}\x1f{r['description'] or ''}")
+    return ext_ids, content
+
+
 def get_task(task_id: str) -> dict | None:
     with connect() as conn:
         row = conn.execute(

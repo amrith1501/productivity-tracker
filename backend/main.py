@@ -57,9 +57,7 @@ from db import (
     delete_tasks_by_ids,
     delete_tasks_for_supervisor,
     employees_for_manager,
-    existing_external_ids,
-    get_inbox_processed_filenames,
-    get_processed_imports,
+    existing_task_keys,
     get_rr_index,
     get_task,
     get_user_by_username,
@@ -360,6 +358,12 @@ def parse_task_file(path: Path) -> list[dict]:
 _inbox_rr_index = 0  # Process-local counter for the global inbox watcher.
 
 
+def _content_key(source_file: str, title: str, description: str) -> str:
+    """Stable identity for a task that has no Task ID, derived from its
+    source file and text. Kept in sync with ``db.existing_task_keys``."""
+    return f"{source_file}\x1f{title}\x1f{description or ''}"
+
+
 def ingest_inbox() -> int:
     """Scan `tasks_inbox/` for new files and create tasks.
 
@@ -383,23 +387,29 @@ def ingest_inbox() -> int:
     by_employee = {(w["employee"] or "").lower(): w for w in workers}
     by_userid = {str(w["id"]): w for w in workers}
 
-    # Cache of external Task IDs already stored per supervisor, so a Task ID
-    # is ingested at most once per supervisor even if it shows up again.
-    seen_ext: dict[int, set[str]] = {}
+    # Per-supervisor snapshot of tasks currently in the DB, so each scan
+    # dedupes against the *live* task list rather than a record of files
+    # seen in the past. A task the supervisor deletes leaves the snapshot
+    # and is therefore re-created on the next scan; brand-new files just
+    # add their tasks alongside the existing ones.
+    snapshot: dict[int, tuple[set[str], set[str]]] = {}
 
-    def _ext_seen(supervisor_id: int, ext: str) -> bool:
-        if supervisor_id not in seen_ext:
-            seen_ext[supervisor_id] = existing_external_ids(supervisor_id)
-        return ext in seen_ext[supervisor_id]
+    def _seen(supervisor_id: int, ext: str | None, ckey: str) -> bool:
+        if supervisor_id not in snapshot:
+            snapshot[supervisor_id] = tuple(  # (external_ids, content_keys)
+                (s.copy() for s in existing_task_keys(supervisor_id)))
+        ext_ids, content = snapshot[supervisor_id]
+        return ext in ext_ids if ext else ckey in content
 
-    processed = get_inbox_processed_filenames()
+    def _remember(supervisor_id: int, ext: str | None, ckey: str) -> None:
+        ext_ids, content = snapshot[supervisor_id]
+        (ext_ids.add(ext) if ext else content.add(ckey))
+
     files = sorted(p for p in INBOX.iterdir() if p.is_file())
     new_count = 0
     dupe_count = 0
 
     for path in files:
-        if path.name in processed:
-            continue
         try:
             entries = parse_task_file(path)
         except Exception as e:
@@ -415,7 +425,9 @@ def ingest_inbox() -> int:
                 _inbox_rr_index += 1
             supervisor_id = worker["manager_id"]
             ext = entry.get("external_id")
-            if ext and _ext_seen(supervisor_id, ext):
+            ckey = _content_key(path.name, entry["title"],
+                                entry.get("description", ""))
+            if _seen(supervisor_id, ext, ckey):
                 dupe_count += 1
                 continue
             tid = str(uuid.uuid4())
@@ -434,10 +446,8 @@ def ingest_inbox() -> int:
                 worker["id"], "task_assigned",
                 f"New task assigned: {entry['title']}", tid,
             )
-            if ext:
-                seen_ext[supervisor_id].add(ext)
+            _remember(supervisor_id, ext, ckey)
             new_count += 1
-        mark_inbox_processed(path.name)
     if new_count or dupe_count:
         print(f"[ingest] added {new_count} tasks from inbox"
               f"{f', skipped {dupe_count} duplicate Task ID(s)' if dupe_count else ''}")
@@ -905,12 +915,13 @@ def _ingest_directory_for_team(directory: Path, team: list[str],
     skipped = 0
     duplicates = 0
     errors: list[str] = []
-    processed = get_processed_imports(supervisor_uid)
     rr = get_rr_index(supervisor_uid)
     assignee_lookup = _build_assignee_lookup(supervisor_uid, team)
-    # Existing Task IDs for this supervisor — used to skip rows that have
-    # already been imported under the same Task ID, even from a new file.
-    seen_ext = existing_external_ids(supervisor_uid)
+    # Snapshot of what's currently stored for this supervisor. Rows are
+    # skipped only if the same task still exists in the DB, so deleting a
+    # task lets it be re-imported from the same file, while genuinely new
+    # rows (in this or any other file) are added alongside the rest.
+    seen_ext, seen_content = existing_task_keys(supervisor_uid)
     # Resolve display name -> worker user id once, to alert the assignee.
     worker_id_by_employee = {
         w["employee"]: w["id"]
@@ -922,10 +933,6 @@ def _ingest_directory_for_team(directory: Path, team: list[str],
                    if p.is_file()
                    and p.suffix.lower() in (".json", ".txt", ".csv"))
     for path in files:
-        abs_path = str(path.resolve())
-        if abs_path in processed:
-            skipped += 1
-            continue
         try:
             entries = parse_task_file(path)
         except Exception as e:
@@ -933,7 +940,9 @@ def _ingest_directory_for_team(directory: Path, team: list[str],
             continue
         for entry in entries:
             ext = entry.get("external_id")
-            if ext and ext in seen_ext:
+            ckey = _content_key(path.name, entry["title"],
+                                entry.get("description", ""))
+            if (ext in seen_ext) if ext else (ckey in seen_content):
                 duplicates += 1
                 continue
             hint = (entry.get("assignee_hint") or "").strip().lower()
@@ -965,9 +974,9 @@ def _ingest_directory_for_team(directory: Path, team: list[str],
                 )
             if ext:
                 seen_ext.add(ext)
+            else:
+                seen_content.add(ckey)
             added += 1
-        mark_import_processed(supervisor_uid, abs_path)
-        processed.add(abs_path)
 
     set_rr_index(supervisor_uid, rr)
     return {"added": added, "skipped": skipped, "duplicates": duplicates,

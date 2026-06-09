@@ -14,6 +14,25 @@ const STATUS_LABELS = {
   approved: 'Approved',
 };
 
+// Backend stores timestamps as naive UTC (e.g. "2026-06-09T03:48:41"), so a
+// plain `new Date(ts)` would misread them as local time. Append a 'Z' when no
+// timezone is present so they're parsed as UTC and then surfaced in the
+// viewer's local zone.
+function parseUTC(ts) {
+  if (!ts) return null;
+  const s = /([zZ]|[+-]\d{2}:?\d{2})$/.test(ts) ? ts : `${ts}Z`;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+const pad2 = (n) => String(n).padStart(2, '0');
+// Local-time bucket keys, so an approval shows up on the day/month the
+// supervisor actually saw it happen.
+const localDayKey = (d) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const localMonthKey = (d) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+
 function aggregateByWorker(workers, tasks) {
   const rows = workers.map((w) => ({
     employee: w.employee,
@@ -29,8 +48,12 @@ function aggregateByWorker(workers, tasks) {
     rec.counts[t.status] = (rec.counts[t.status] || 0) + 1;
     rec.total += 1;
     if (t.status === 'approved' && t.started_at && t.approved_at) {
-      const hrs = (new Date(t.approved_at) - new Date(t.started_at)) / 36e5;
-      if (Number.isFinite(hrs) && hrs >= 0) rec.cycleHours.push(hrs);
+      const a = parseUTC(t.approved_at);
+      const s = parseUTC(t.started_at);
+      if (a && s) {
+        const hrs = (a - s) / 36e5;
+        if (Number.isFinite(hrs) && hrs >= 0) rec.cycleHours.push(hrs);
+      }
     }
   }
   for (const r of rows) {
@@ -53,7 +76,7 @@ function approvedByDay(tasks, days = 7,
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     buckets.push({
-      key: d.toISOString().slice(0, 10),
+      key: localDayKey(d),
       label: d.toLocaleDateString(undefined, labelFmt),
       date: d,
       count: 0,
@@ -62,8 +85,9 @@ function approvedByDay(tasks, days = 7,
   const idxByKey = new Map(buckets.map((b, i) => [b.key, i]));
   for (const t of tasks) {
     if (t.status !== 'approved' || !t.approved_at) continue;
-    const key = String(t.approved_at).slice(0, 10);
-    const idx = idxByKey.get(key);
+    const d = parseUTC(t.approved_at);
+    if (!d) continue;
+    const idx = idxByKey.get(localDayKey(d));
     if (idx !== undefined) buckets[idx].count += 1;
   }
   return buckets;
@@ -74,9 +98,8 @@ function approvedByMonth(tasks, months = 12) {
   const buckets = [];
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     buckets.push({
-      key,
+      key: localMonthKey(d),
       date: d,
       count: 0,
       label: d.toLocaleDateString(undefined, { month: 'short' }),
@@ -86,8 +109,9 @@ function approvedByMonth(tasks, months = 12) {
   const idxByKey = new Map(buckets.map((b, i) => [b.key, i]));
   for (const t of tasks) {
     if (t.status !== 'approved' || !t.approved_at) continue;
-    const key = String(t.approved_at).slice(0, 7);
-    const idx = idxByKey.get(key);
+    const d = parseUTC(t.approved_at);
+    if (!d) continue;
+    const idx = idxByKey.get(localMonthKey(d));
     if (idx !== undefined) buckets[idx].count += 1;
   }
   return buckets;

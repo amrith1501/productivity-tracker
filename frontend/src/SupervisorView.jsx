@@ -99,8 +99,9 @@ export default function SupervisorView({ employees: initialEmployees }) {
         `Imported ${res.added} task${res.added === 1 ? '' : 's'}`,
         `from ${res.scanned} file${res.scanned === 1 ? '' : 's'}`,
       ];
-      if (res.skipped) parts.push(`${res.skipped} file(s) already imported`);
-      if (res.duplicates) parts.push(`${res.duplicates} duplicate Task ID(s) skipped`);
+      if (res.duplicates) {
+        parts.push(`${res.duplicates} existing task${res.duplicates === 1 ? '' : 's'} skipped`);
+      }
       if (res.errors?.length) parts.push(`${res.errors.length} error(s)`);
       setImportMsg({
         ok: true,
@@ -545,8 +546,9 @@ function TasksTab({
           {' '}<code>Task ID</code>, <code>Task Name</code>, <code>Description</code>,
           {' '}and <code>Assigned Employee_ID</code> (username or display name) — when
           that column is filled the task goes straight to that worker; blank rows
-          are auto-divided evenly across your team. Files already imported are
-          skipped. A ready-made example lives in <code>samples/sample_tasks.csv</code>.
+          are auto-divided evenly across your team. Existing tasks are skipped,
+          but deleted tasks can be imported again from the same file. A ready-made
+          example lives in <code>samples/sample_tasks.csv</code>.
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
